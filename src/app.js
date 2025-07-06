@@ -26,7 +26,7 @@ import { errorHandler } from "./middlewares/error.mid.js";
 // routes
 app.use("/api/v1/healthcheck", healthcheckRouter);
 app.use("/api/v1/user", userRouter);
-app.use("/api/v1/videos", videoRouter);
+app.use("/api/v1/video", videoRouter);
 // routes
 
 app.use(errorHandler);

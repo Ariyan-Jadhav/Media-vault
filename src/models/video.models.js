@@ -35,15 +35,14 @@ const videoSchema = new Schema(
     },
     views: {
       type: Number,
-      default: true,
+      default: 0,
     },
     duration: {
       type: Number,
       required: true,
-      default: true,
     },
     isPublished: {
-      type: Number,
+      type: Boolean,
       default: true,
     },
     owner: {

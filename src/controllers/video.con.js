@@ -62,7 +62,7 @@ const getAllVideos = asyncHandle(async (req, res) => {
     },
     {
       $lookup: {
-        form: "users",
+        from: "users",
         localField: "owner",
         foreignField: "_id",
         as: "owner",
@@ -119,8 +119,8 @@ const getAllVideos = asyncHandle(async (req, res) => {
   ]);
 
   const totalCount = totalVideos[0]?.total || 0;
-  const totalPage = totalCount / limitNum;
-  const hasNextPage = pageNum < totalCount;
+  const totalPage = Math.ceil(totalCount / limitNum);
+  const hasNextPage = pageNum < totalPage;
   const hasPreviousPage = pageNum > 1;
 
   // Response with pagination info
@@ -143,4 +143,52 @@ const getAllVideos = asyncHandle(async (req, res) => {
     )
   );
 });
-export { getAllVideos };
+
+const publishAVideo = asyncHandle(async (req, res) => {
+  const { title, description } = req.body;
+  //Validation
+  if ([title, description].some((field) => field?.trim() === ""))
+    throw new apiError(400, "all fields are rerquired");
+
+  const videoLocalPath = req.files?.video?.[0]?.path;
+  const thumbnailLocalPath = req.files?.thumbnail?.[0]?.path;
+
+  if (!videoLocalPath) throw new apiError(500, "failed to upload video");
+
+  let videoFile;
+  try {
+    videoFile = await uploadOnCloudinary(videoLocalPath);
+    console.log("video uploaded successfully");
+  } catch (error) {
+    console.log("Error uploading video", error);
+    throw new apiError(500, "Failed to upload video");
+  }
+  let thumbnail;
+  try {
+    thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+    console.log("thumbnail uploaded successfully");
+  } catch (error) {
+    console.log("Error uploading thumbnail", error);
+    throw new apiError(500, "Failed to upload thumbnail");
+  }
+  try {
+    const video = await Video.create({
+      title,
+      description,
+      videoFile: videoFile.url,
+      thumbnail: thumbnail?.url || "",
+      duration: videoFile.duration || videoFile.resource?.duration || 0,
+      isPublished: true,
+      owner: req.user._id,
+    });
+
+    return res.status(201).json(new apiResponse(201, video, "Video Uploaded"));
+  } catch (error) {
+    console.log("SWW while uploading VDO");
+    if (videoFile.public_id) await deleteFromCloudinary(videoFile.public_id);
+    if (thumbnail.public_id) await deleteFromCloudinary(thumbnail.public_id);
+    throw new apiError(500, "Something went wrong while uploading VDO");
+  }
+});
+
+export { getAllVideos, publishAVideo };
