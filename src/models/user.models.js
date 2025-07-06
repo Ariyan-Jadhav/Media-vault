@@ -63,7 +63,6 @@ const userSchema = new Schema(
   { timestamps: true }
 );
 
-//Zurfa explain me everything starting from hear
 userSchema.pre("save", async function (next) {
   if (!this.isModified("password")) return next();
 
@@ -99,4 +98,3 @@ userSchema.methods.generateRefreshToken = function () {
 };
 
 export const User = mongoose.model("User", userSchema);
-//Zurfa beautifool

@@ -19,12 +19,14 @@ app.use(cookieParser());
 // import routes
 import healthcheckRouter from "../src/routes/healthcheck.rou.js";
 import userRouter from "../src/routes/user.rou.js";
+import videoRouter from "./routes/video.rou.js";
 import { errorHandler } from "./middlewares/error.mid.js";
 // import routes
 
 // routes
 app.use("/api/v1/healthcheck", healthcheckRouter);
 app.use("/api/v1/user", userRouter);
+app.use("/api/v1/videos", videoRouter);
 // routes
 
 app.use(errorHandler);

@@ -50,14 +50,6 @@ const registerUser = asyncHandle(async (req, res) => {
 
   if (!avatarLocalPath) throw new apiError(500, "failed to upload Avatar");
 
-  // const avatar = await uploadOnCloudinary(avatarLocalPath);
-
-  // let coverImage = "";
-
-  // if (coverImageLocalPath) {
-  //   coverImage = await uploadOnCloudinary(coverImageLocalPath);
-  // }
-
   let avatar;
   try {
     avatar = await uploadOnCloudinary(avatarLocalPath);
@@ -74,7 +66,20 @@ const registerUser = asyncHandle(async (req, res) => {
     console.log("Error uploading coverImage", error);
     throw new apiError(500, "Failed to upload coverImage");
   }
+  // There is a better approach while uploading the avatar and coverImg
+  /*
 
+  // Upload to cloudinary
+       uploadedImageList = [
+            avatarLocalPath ? avatarLocalPath : null,
+            coverImageLocalPath ? coverImageLocalPath : null,
+        ].filter(Boolean);
+
+        const [avatar, coverImage] = await Promise.all(
+            uploadedImageList.map((item) => uploadOnCloudinary(item))
+        );
+        
+         */
   try {
     const user = await User.create({
       fullName,
