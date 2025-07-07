@@ -20,6 +20,7 @@ app.use(cookieParser());
 import healthcheckRouter from "../src/routes/healthcheck.rou.js";
 import userRouter from "../src/routes/user.rou.js";
 import videoRouter from "./routes/video.rou.js";
+import commentRouter from "./routes/comment.rou.js";
 import { errorHandler } from "./middlewares/error.mid.js";
 // import routes
 
@@ -27,6 +28,7 @@ import { errorHandler } from "./middlewares/error.mid.js";
 app.use("/api/v1/healthcheck", healthcheckRouter);
 app.use("/api/v1/user", userRouter);
 app.use("/api/v1/video", videoRouter);
+app.use("/api/v1/comment", commentRouter);
 // routes
 
 app.use(errorHandler);
