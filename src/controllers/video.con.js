@@ -289,10 +289,67 @@ const updateThumbnail = asyncHandle(async (req, res) => {
     .status(200)
     .json(new apiResponse(200, newVideo, "Thumbnail updated successfully"));
 });
+
+const deleteVideo = asyncHandle(async (req, res) => {
+  const { videoId } = req.params;
+
+  if (!videoId?.trim()) throw new apiError(400, "video-Id not found");
+
+  const video = await Video.findById(videoId);
+  if (!video) throw new apiError(400, "video not found");
+
+  if (video.owner.toString() !== req.user?._id.toString())
+    throw new apiError(400, "Damn!!! his video does not belongs to you");
+
+  if (video.thumbnail) {
+    try {
+      const oldPublicId = video.thumbnail.split("/").pop().split(".")[0];
+      await deleteFromCloudinary(oldPublicId);
+    } catch (error) {
+      console.log("Error deleting thumbnail:", error);
+    }
+  }
+  if (video.videoFile) {
+    try {
+      const oldPublicId = video.videoFile.split("/").pop().split(".")[0];
+      await deleteFromCloudinary(oldPublicId);
+    } catch (error) {
+      console.log("Error deleting videoFile:", error);
+    }
+  }
+  await Video.findByIdAndDelete(videoId);
+  return res
+    .status(200)
+    .json(
+      new apiResponse(
+        200,
+        { deletedVideo: video },
+        "Video deleated successfully"
+      )
+    );
+});
+
+const togglePublishStatus = asyncHandle(async (req, res) => {
+  const { videoId } = req.params;
+  if (!videoId?.trim()) throw new apiError(400, "video-Id not found");
+
+  const video = await Video.findById(videoId);
+  if (!video) throw new apiError(400, "video not found");
+
+  if (video.owner.toString() !== req.user?._id.toString())
+    throw new apiError(400, "Damn!!! his video does not belongs to you");
+  video.isPublished = !video.isPublished;
+  await video.save();
+  return res
+    .status(200)
+    .json(new apiResponse(200, video, "ispublished toggle successfully"));
+});
 export {
   getAllVideos,
   publishAVideo,
   getVideoById,
   updateThumbnail,
   updateVideo,
+  deleteVideo,
+  togglePublishStatus,
 };
