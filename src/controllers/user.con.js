@@ -295,7 +295,7 @@ const UpdateUserAvatar = asyncHandle(async (req, res) => {
 
   return res
     .status(200)
-    .json(new apiResponse(200, req.user, "user avatar updated"));
+    .json(new apiResponse(200, user, "user avatar updated"));
 });
 const UpdateUserCoverImage = asyncHandle(async (req, res) => {
   const coverImageLocalPath = req.file?.path;

@@ -43,9 +43,10 @@ const getAllVideos = asyncHandle(async (req, res) => {
   // Add userId filter if provided
 
   if (userId) {
-    matchStage.owner = userId;
+    matchStage.owner = new mongoose.Types.ObjectId(userId);
+  } else {
+    throw new apiError(400, "Invalid userId format");
   }
-
   // Build sort stage
 
   const sortStage = {};
@@ -191,4 +192,107 @@ const publishAVideo = asyncHandle(async (req, res) => {
   }
 });
 
-export { getAllVideos, publishAVideo };
+const getVideoById = asyncHandle(async (req, res) => {
+  const { videoId } = req.params;
+  if (!videoId?.trim()) {
+    throw new apiError(400, "Video-Id is required");
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(videoId))
+    throw new apiError(400, "Video-Id is incorrect BABUUU!!");
+
+  const video = await Video.findById(videoId);
+
+  if (!video) throw new apiError(401, "Could not find video");
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, video, "found the video by Id"));
+});
+
+const updateVideo = asyncHandle(async (req, res) => {
+  const { videoId } = req.params;
+  const { title, description } = req.body;
+  if (!videoId?.trim()) {
+    throw new apiError(400, "Video-Id is required");
+  }
+
+  if (!mongoose.Types.ObjectId.isValid(videoId))
+    throw new apiError(400, "Video-Id is incorrect BABUUU!!");
+
+  const video = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: {
+        title,
+        description,
+      },
+    },
+    { new: true }
+  );
+
+  return res.status(201).json(new apiResponse(201, video, "Updated SuckSex"));
+});
+
+const updateThumbnail = asyncHandle(async (req, res) => {
+  const { videoId } = req.params;
+  if (!videoId?.trim()) {
+    throw new apiError(400, "Video ID is required");
+  }
+
+  const thumbnailLocalPath = req.file?.path;
+  if (!thumbnailLocalPath) {
+    throw new apiError(401, "File is req");
+  }
+
+  const existingVideo = await Video.findById(videoId);
+  if (!existingVideo) throw new apiError(403, "your id not found");
+
+  if (existingVideo.owner.toString() !== req.user._id.toString())
+    throw new apiError(403, "you can only update your videos");
+
+  console.log(req.user._id);
+
+  let thumbnail;
+  try {
+    thumbnail = await uploadOnCloudinary(thumbnailLocalPath);
+    if (!thumbnail.url) throw new apiError(403, "failed to upload");
+  } catch (error) {
+    console.log(error);
+    if (!thumbnail.url) throw new apiError(403, "failed to upload");
+  }
+
+  const newVideo = await Video.findByIdAndUpdate(
+    videoId,
+    {
+      $set: {
+        thumbnail: thumbnail.url,
+      },
+    },
+    { new: true }
+  );
+  if (existingVideo.thumbnail) {
+    try {
+      // Extract public_id from old thumbnail URL
+      const oldPublicId = existingVideo.thumbnail
+        .split("/")
+        .pop()
+        .split(".")[0];
+      await deleteFromCloudinary(oldPublicId);
+    } catch (error) {
+      console.log("Error deleting old thumbnail:", error);
+      // Don't throw error here, just log it
+    }
+  }
+
+  return res
+    .status(200)
+    .json(new apiResponse(200, newVideo, "Thumbnail updated successfully"));
+});
+export {
+  getAllVideos,
+  publishAVideo,
+  getVideoById,
+  updateThumbnail,
+  updateVideo,
+};
