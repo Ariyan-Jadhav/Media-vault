@@ -1,1 +1,1 @@
-# Still some work is pending getting back on it soon
+🚧 Dashboard and some routes are still under development — coming back to it soon!
